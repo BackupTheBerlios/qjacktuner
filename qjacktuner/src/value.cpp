@@ -19,7 +19,7 @@
  ***************************************************************************/
 #include "value.h"
 
-#define DO_TRACE
+//#define DO_TRACE
 
 
 bool ValueEvent::Value::operator < (const Value& Other) const
