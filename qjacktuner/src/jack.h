@@ -1,0 +1,2 @@
+int jackUp();
+void jackDown();
