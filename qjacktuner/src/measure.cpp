@@ -70,8 +70,10 @@ extern MainWindow *PW;
 
 
 //static clFIRDecimator Decimator;
-static Dezimat8 Decimator(2048);
-#define DECIMATE_BY 8
+//static Dezimat_8 Decimator(2048);
+//#define DECIMATE_BY 8
+static Dezimat16 Decimator(2048);
+#define DECIMATE_BY 16
  
 
 

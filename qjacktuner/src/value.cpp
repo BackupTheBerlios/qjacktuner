@@ -17,48 +17,89 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-/****************************************************************************
-** ui.h extension file, included from the uic-generated form implementation.
-**
-** If you wish to add, delete or rename functions or slots use
-** Qt Designer which will update this file, preserving your code. Create an
-** init() function in place of a constructor, and a destroy() function in
-** place of a destructor.
-*****************************************************************************/
 #include "value.h"
-#include "scala.h"
+
+#define DO_TRACE
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void MainWindow::helpAbout()
+bool ValueEvent::Value::operator < (const Value& Other) const
 {
-
+  return Other.A < A;
 }
 
-void MainWindow::customEvent(QCustomEvent *E)
+ValueEvent::Value &ValueEvent::Co::operator [] (int i)
 {
-	ValueEvent::TheValueEvent = new ValueEvent;
-	ValueEvent &V(*(ValueEvent*)E);
-	QString *Name;
-	int OktavOffset;
-	double Deviation;
-	TheScala.ComputeTone(Name, OktavOffset, Deviation, V.GetF());
-	slider1->setValue(50 + (int)(100*Deviation));
-	textLabel1->setText(*Name);
+  return c[i];
+}
+
+void ValueEvent::Co::Sort()
+{
+  container_type::iterator a = c.begin(), z = c.end();
+  sort(a, z);
+
+#ifdef DO_TRACE
+  int i = VALUES - 1;
+  while (i >= 0) {
+    cout << i << "sss" << c[i].A << "@" << c[i].Freq << "Hz ";
+    --i;
+  }
+  cout << endl;
+#endif
 }
 
 
+ValueEvent::ValueEvent():QCustomEvent(User)
+{
+  Value V = {0.0, 0.0};
+  setData(new Co());
+  int i = VALUES + 1;
+  while (i--)
+    data()->push(V);
+  data()->pop();
+}
+
+ValueEvent::~ValueEvent()
+{
+  delete data();
+}
+
+
+void ValueEvent::Try(float Freq, float Amp) {
+  if (Freq > 0.0  &&  Amp > data()->top().A) {
+    Value V = {Freq, Amp};
+    data()->push(V);
+    data()->pop();
+  }
+}
+
+void ValueEvent::Dump() {
+  int i;
+  for (i = 0; i < VALUES; i++) {
+    cout << data()->top().A << "@" << data()->top().Freq << "Hz ";
+    data()->pop();
+  }
+  cout << endl;
+}
+
+
+float ValueEvent::GetF() {
+  struct Value V;
+  data()->Sort();
+  int i = 0;
+  do {
+    V = (*data())[i];
+#ifdef DO_TRACE
+    cout << i << "set" << V.A << "@" << V.Freq << "Hz ";
+#endif
+  } while (++i < VALUES  &&  (*data())[i].Freq > 0.0  &&  V.Freq / (*data())[i].Freq > 2.5);
+#ifdef DO_TRACE
+  while (i < VALUES) {
+    cout << i << "---" << (*data())[i].A << "@" << (*data())[i].Freq << "Hz ";
+    ++i;
+  }
+  cout << endl;
+#endif
+
+  return V.Freq;
+}
 

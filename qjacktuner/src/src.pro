@@ -4,16 +4,17 @@
 # Target is an application:  ../bin/qjacktuner
 
 TARGET=../bin/qjacktuner
-TEMPLATE =app
+TEMPLATE = app
+LANGUAGE = C++
 CONFIG += release thread qt
 LIBS += -ljack
-LANGUAGE = C++
 SOURCES += qtuna.cpp \
            measure.cpp \
            jack.cpp \
            tools.cpp \
            halbbanddezimator.cpp \
-           scala.cpp 
+           scala.cpp \
+           value.cpp 
 HEADERS += halbbanddezimator.h \
            jack.h \
            scala.h \

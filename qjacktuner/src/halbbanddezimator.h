@@ -40,25 +40,51 @@ class HalbbandDezimator {
 	}
 };
 
-class Dezimat8 {
-	HalbbandDezimator D2, D4, D8;
+class Dezimat_8 {
+	HalbbandDezimator D_2, D_4, D_8;
 	float *Puffer;
  public:
-	Dezimat8(size_t l) {
+	Dezimat_8(size_t l) {
 		Puffer = new float[l+8];
 	}
-	~Dezimat8() {
+	~Dezimat_8() {
 		delete Puffer;
 	}
 
-	float *Dezimiere( const float * const Werte, int const n) {
+	float *Dezimiere(const float * const Werte, int const n) {
 		int i;
 		for (i = 0; i < n/2; i++)
-			Puffer[i+2] = D2.Dezimiere(Werte + 2*i);
+			Puffer[i+2] = D_2.Dezimiere(Werte + 2*i);
 		for (i = 0; i < n/4; i++)
-			Puffer[i+1] = D4.Dezimiere(Puffer + 2 + 2*i);
+			Puffer[i+1] = D_4.Dezimiere(Puffer + 2 + 2*i);
 		for (i = 0; i < n/8; i++)
-			Puffer[i] = D8.Dezimiere(Puffer + 1 + 2*i);
+			Puffer[i] = D_8.Dezimiere(Puffer + 1 + 2*i);
+
+		return Puffer;
+	}
+};
+
+class Dezimat16 {
+	HalbbandDezimator D_2, D_4, D_8, D16;
+	float *Puffer;
+ public:
+	Dezimat16(size_t l) {
+		Puffer = new float[l+16];
+	}
+	~Dezimat16() {
+		delete Puffer;
+	}
+
+	float *Dezimiere(const float * const Werte, int const n) {
+		int i;
+		for (i = 0; i < n/2; i++)
+			Puffer[i+3] = D_2.Dezimiere(Werte + 2*i);
+		for (i = 0; i < n/4; i++)
+			Puffer[i+2] = D_4.Dezimiere(Puffer + 3 + 2*i);
+		for (i = 0; i < n/8; i++)
+			Puffer[i+1] = D_8.Dezimiere(Puffer + 2 + 2*i);
+		for (i = 0; i < n/16; i++)
+			Puffer[i] = D_8.Dezimiere(Puffer + 1 + 2*i);
 
 		return Puffer;
 	}

@@ -21,6 +21,7 @@
 #include <qevent.h>
 #include <queue> 
 
+
 using namespace std;
 
 class ValueEvent: public QCustomEvent
@@ -29,82 +30,23 @@ class ValueEvent: public QCustomEvent
 	struct Value {
 		float Freq;
 		float A;
-		bool operator < (const Value& Other) const {
-			return Other.A < A;
-		}
+		bool operator < (const Value& Other) const;
 	};
-	typedef priority_queue<Value> Co;
+	class Co: public priority_queue<Value> {
+	public:
+		Value &operator [] (int i);
+		void Sort(void);
+	};
+
 	Co *data() {
 		return (Co*)QCustomEvent::data();
 	}
  public:
-	ValueEvent():QCustomEvent(User) {
-		Value V = {0.0, 0.0};
-		setData(new Co());
-		int i = VALUES + 1;
-		while (i--)
-			data()->push(V);
-		data()->pop();
-	}
-	~ValueEvent() {
-		delete data();
-	}
-
-	void Try(float Freq, float Amp) {
-		Value V = {Freq, Amp};
-		data()->push(V);
-		data()->pop();
-	}
-
-	void Dump() {
-		int i;
-		for (i = 0; i < VALUES; i++) {
-			cout << data()->top().A << "@" << data()->top().Freq << "Hz ";
-			data()->pop();
-		}
-		cout << endl;
-	}
-
-	void DumpF() {
-		int i = 0;
-		struct Value V = data()->top(), V0;
-		data()->pop();
-		if (data()->top().Freq > 0.0)
-			if (V.Freq / data()->top().Freq > 1.1) {
-				V0 = V;
-				V = data()->top();
-				i = 1;
-			}
-		data()->pop();
-		if (data()->top().Freq > 0.0)
-			if (V.Freq / data()->top().Freq > 1.1) {
-				V = data()->top();
-				i = 2;
-			}
-		cout << i << " " << V.Freq << "Hz ";
-		if (1 == i)
-			cout << V0.Freq << "Hz ";
-		cout << endl;
-	}
-
-	float GetF() {
-		int i = 0;
-		struct Value V = data()->top(), V0;
-		data()->pop();
-		if (data()->top().Freq > 0.0)
-			if (V.Freq / data()->top().Freq > 1.1) {
-				V0 = V;
-				V = data()->top();
-				i = 1;
-			}
-		data()->pop();
-		if (data()->top().Freq > 0.0)
-			if (V.Freq / data()->top().Freq > 1.1) {
-				V = data()->top();
-				i = 2;
-			}
-		return V.Freq;
-	}
+	ValueEvent();
+	~ValueEvent();
+	void Try(float Freq, float Amp);
+	void Dump();
+	float GetF();
 
 	static ValueEvent * volatile TheValueEvent;
  
