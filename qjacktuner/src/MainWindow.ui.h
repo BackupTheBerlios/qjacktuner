@@ -52,12 +52,16 @@ void MainWindow::customEvent(QCustomEvent *E)
 {
 	ValueEvent::TheValueEvent = new ValueEvent;
 	ValueEvent &V(*(ValueEvent*)E);
-	QString *Name;
+	static QString *Name;
+	QString *NewName;
 	int OktavOffset;
 	double Deviation;
-	TheScala.ComputeTone(Name, OktavOffset, Deviation, V.GetF());
+	TheScala.ComputeTone(NewName, OktavOffset, Deviation, V.GetF());
 	slider1->setValue(50 + (int)(100*Deviation));
-	textLabel1->setText(*Name);
+	if (Name != NewName) {
+		textLabel1->setText(*NewName);
+		Name = NewName;
+	}
 }
 
 
