@@ -18,12 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include <iostream>
+#include <math.h>
 
 #include "halbbanddezimator.h"
 
 using namespace std;
 
-//#define M_PI 3.14159265358979323846
 
 
 HalbbandDezimator::HalbbandDezimator()
