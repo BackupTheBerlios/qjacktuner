@@ -27,7 +27,7 @@
 *****************************************************************************/
 #include "value.h"
 #include "scala.h"
-
+#include "jack.h"
 
 
 
@@ -45,24 +45,76 @@
 
 void MainWindow::helpAbout()
 {
-
+    
 }
 
 void MainWindow::customEvent(QCustomEvent *E)
 {
-	ValueEvent::TheValueEvent = new ValueEvent;
-	ValueEvent &V(*(ValueEvent*)E);
-	static QString *Name;
-	QString *NewName;
-	int OktavOffset;
-	double Deviation;
-	TheScala.ComputeTone(NewName, OktavOffset, Deviation, V.GetF());
-	slider1->setValue(50 + (int)(100*Deviation));
-	if (Name != NewName) {
+    switch (E->type() - QCustomEvent::User) {
+    case 0: {
+	    ValueEvent::TheValueEvent = new ValueEvent;
+	    ValueEvent &V(*(ValueEvent*)E);
+	    static QString *Name;
+	    QString *NewName;
+	    int OktavOffset;
+	    double Deviation;
+	    TheScala.ComputeTone(NewName, OktavOffset, Deviation, V.GetF());
+	    slider1->setValue(50 + (int)(100*Deviation));
+	    if (Name != NewName) {
 		textLabel1->setText(*NewName);
 		Name = NewName;
-	}
+	    }
+	}break;
+    case 1: {
+	    const char ** C = (const char **)E->data();
+	    int i;
+	    QString CS;
+	    if (C) {
+		for (i=0; C[i]; i++) {
+		    if (CS.isEmpty())
+			CS += " @ ";
+		    else
+			CS += " + ";
+		    CS += C[i];
+		    free((void*)C[i]);
+		}
+		free(C);
+	    }
+	    
+	    setCaption(QString("qjacktuner") += CS);
+	}break;
+    }
 }
 
 
 
+
+
+void MainWindow::menubar_activated(int i)
+{
+    QString w = PortBase;
+    w += ":";
+    w += Input->text(i);
+    //cout  << __FUNCTION__ << " "<< w << endl;
+    jackConnect(w);
+    //cout << name() << endl;
+    //setCaption(QString("qjacktuner @ ") += w);
+}
+
+
+void MainWindow::menubar_highlighted( int i)
+{
+    //cout << __FUNCTION__ << i << endl;
+    if (1 == i)
+	fillInputDropdown();
+    else
+	if (Input->itemParameter(i))
+	    PortBase = Input->text(i);
+}
+
+
+void MainWindow::fillInputDropdown()
+{
+    Input->clear();
+    jackGetPorts(*Input);
+}

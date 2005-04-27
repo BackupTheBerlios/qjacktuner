@@ -19,7 +19,7 @@
     * 2002/08/23 - modify for libsndfile 1.0.0 <andy@alsaplayer.org>
     * 2003/05/26 - use ringbuffers - joq
     
-    $Id: jack.cpp,v 1.1 2004/05/04 09:47:11 fzu Exp $
+    $Id: jack.cpp,v 1.2 2005/04/27 20:56:59 fzu Exp $
 */
 
 #include <stdio.h>
@@ -37,9 +37,15 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <list>
+#include <qpopupmenu.h>
+#include <qapplication.h>
 
 #include "tools.h"
 #include "jack.h"
+#include "MainWindow.h"
+
+extern MainWindow *PW;
 
 using namespace std;
 
@@ -66,6 +72,8 @@ pthread_mutex_t disk_thread_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  data_ready = PTHREAD_COND_INITIALIZER;
 long overruns = 0;
 
+static jack_client_t *client;
+
 static int SampleRateCallback(jack_nframes_t nframes, void *arg) 
 {
   ((thread_info_t *)arg)->SampleRate = nframes;
@@ -84,7 +92,7 @@ void MeasurePitch(long numSampsToProcess, float sampleRate, float *indata);
 static int ProcessCallback(jack_nframes_t nframes, void *arg)
 {
 	int chn;
-	size_t i;
+	//	size_t i;
 	thread_info_t *info = (thread_info_t *) arg;
 
 
@@ -114,6 +122,21 @@ static int ProcessCallback(jack_nframes_t nframes, void *arg)
 // 	}
 
 	return 0;
+}
+
+
+
+static int GraphOrderCallback(void *arg)
+{
+  //  cout << __FUNCTION__ << endl;
+
+  const char ** C = jack_port_get_connections (ports[0]);
+
+  QCustomEvent * E =  new QCustomEvent(QCustomEvent::User + 1);
+  E->setData(C);
+  QApplication::postEvent(PW, E);
+
+  return 0;
 }
 
 static void jack_shutdown(void *arg)
@@ -157,7 +180,6 @@ static void setup_ports(thread_info_t *info)
 }
 
 
-static jack_client_t *client;
 static thread_info_t thread_info;
 
 int jackUp()
@@ -180,13 +202,14 @@ int jackUp()
     jack_on_shutdown (client, jack_shutdown, &thread_info);
     jack_set_sync_callback(client, SyncCallback, &thread_info);
     jack_set_process_callback(client, ProcessCallback, &thread_info);
+
+    setup_ports (&thread_info);
+    jack_set_graph_order_callback(client, GraphOrderCallback, NULL);
     if (jack_activate (client)) {
       fprintf (stderr, "cannot activate client\n");
       exit(1);
     }
 
-
-    setup_ports (&thread_info);
   }
   return 0;
 }
@@ -198,4 +221,112 @@ void jackDown()
 
   DEBUG("Ende");
 
+}
+
+
+class Port
+{
+  const char* Name;
+  string _Name;
+public:
+  Port(const char* name):Name(name), _Name(strchr(name, ':') + 1) {}
+  ~Port() {
+    //    cout << __FUNCTION__ << " " << Name  << " @" << (void*)Name << endl;
+    ::free((void*)Name);
+  }
+
+  const string& name() {return _Name;}
+
+};
+
+
+
+class Client
+{
+  typedef list<Client*> TClients;
+  static TClients Clients;
+
+  typedef list<Port*> TPorts;
+  TPorts Ports;
+  string Name;
+  QPopupMenu *ChildM;
+  void addPort(const char * name)
+  {
+    Port *P;
+    Ports.push_back(P = new Port(name));
+    ChildM->setItemParameter(ChildM->insertItem(P->name()), 0);
+  }
+
+  Client(const string &name, QPopupMenu &m):Name(name) {
+    ChildM = new QPopupMenu;
+    m.setItemParameter(m.insertItem(Name, ChildM), 1);
+  }
+
+  ~Client()
+  {
+    //cout << __FUNCTION__ << " " << Name << endl;
+    TPorts::iterator p = Ports.begin();
+    while (p != Ports.end()) {
+      delete *p;
+      ++p;
+    }
+  }
+public:
+  static void addClientPort(const char * name, QPopupMenu &M)
+  {
+    string ClientName = name;
+    ClientName.resize(ClientName.find(':'));
+    //cout << __FUNCTION__ << " " << name << " @" << (void*)name << endl;
+
+    TClients::iterator i = Clients.begin();
+    Client * C = NULL;
+    while (i != Clients.end()) {
+      if ((*i)->Name == ClientName) {
+	C = *i;
+	break;
+      }
+      ++i;
+    }
+    if (!C) {
+      C = new Client(ClientName, M);
+      Clients.push_back(C);
+    }
+    C->addPort(name);
+  }
+
+  static void clearAll()
+  {
+    TClients::iterator i = Clients.begin();
+    while (i != Clients.end()) {
+      //cout << __FUNCTION__ << " " << (*i)->Name << endl;
+      delete (*i);
+      i++;
+    }
+
+    Clients.clear();
+  }
+};
+
+Client::TClients Client::Clients;
+
+void jackGetPorts(QPopupMenu &M)
+{
+  const char **Ports = jack_get_ports(client, NULL, NULL, JackPortIsOutput);
+  int i = 0;
+  if (Ports) {
+    while (Ports[i]) {
+      //      cout << Ports[i] << endl;
+      Client::addClientPort(Ports[i], M);
+      ++i;
+    }
+    free(Ports);
+  }
+
+  Client::clearAll();
+}
+
+void jackConnect(const char *Input)
+{
+  jack_port_disconnect(client, ports[0]);
+  jack_connect(client, Input, jack_port_name(ports[0]));
 }

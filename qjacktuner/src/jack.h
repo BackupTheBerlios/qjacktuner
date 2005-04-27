@@ -19,3 +19,5 @@
  ***************************************************************************/
 int jackUp();
 void jackDown();
+void jackGetPorts(QPopupMenu &M);
+void jackConnect(const char *Input);
