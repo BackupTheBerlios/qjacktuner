@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2004 by Karsten Wiese                                   *
+ *   Copyright (C) 2004-2005 by Karsten Wiese                                   *
  *   annabellesgarden@yahoo.de                                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -76,7 +76,6 @@ void MainWindow::customEvent(QCustomEvent *E)
 		    else
 			CS += " + ";
 		    CS += C[i];
-		    free((void*)C[i]);
 		}
 		free(C);
 	    }
