@@ -19,7 +19,7 @@
     * 2002/08/23 - modify for libsndfile 1.0.0 <andy@alsaplayer.org>
     * 2003/05/26 - use ringbuffers - joq
     
-    $Id: jack.cpp,v 1.2 2005/04/27 20:56:59 fzu Exp $
+    $Id: jack.cpp,v 1.3 2007/10/07 11:59:45 fzu Exp $
 */
 
 #include <stdio.h>
@@ -232,7 +232,6 @@ public:
   Port(const char* name):Name(name), _Name(strchr(name, ':') + 1) {}
   ~Port() {
     //    cout << __FUNCTION__ << " " << Name  << " @" << (void*)Name << endl;
-    ::free((void*)Name);
   }
 
   const string& name() {return _Name;}
